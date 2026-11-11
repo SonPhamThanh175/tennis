@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum PaymentMethod {
+  STRIPE
+  VNPAY
+  MOMO
+  COD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPING
+  COMPLETED
+  CANCELLED
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// Nhóm trọng lượng (chưa căng dây): <250 / 250-269 / 270-289 / 290-310 / >310 gram.
+enum WeightClass {
+  ULTRA_LIGHT
+  LIGHT
+  MEDIUM
+  HEAVY
+  EXTRA_HEAVY
+}
+
+// Nhóm mặt vợt: 85-97 / 98-102 / >=103 inch vuông.
+enum HeadSizeClass {
+  SMALL
+  MIDPLUS
+  OVERSIZE
+}
+
+enum Balance {
+  HEAD_LIGHT
+  EVEN
+  HEAD_HEAVY
+}
+
+enum StringPattern {
+  P16X19
+  P16X18
+  P16X20
+  P18X20
+  P18X19
+}
+
+enum PlayStyle {
+  POWER
+  CONTROL
+  SPIN
+  ALL_ROUND
+}
+
+enum Condition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+}
+
+enum GripSize {
+  G0
+  G1
+  G2
+  G3
+  G4
+  G5
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  role         Role      @default(CUSTOMER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  addresses    Address[]
+  cart         Cart?
+  orders       Order[]
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  phone     String
+  line1     String
+  ward      String?
+  district  String?
+  city      String
+  isDefault Boolean @default(false)
+  orders    Order[]
+
+  @@index([userId])
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  isActive Boolean   @default(true)
+  products Product[]
+}
+
+model Brand {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  isActive Boolean   @default(true)
+  products Product[]
+}
+
+model Product {
+  id            String           @id @default(cuid())
+  name          String
+  slug          String           @unique
+  description   String
+  images        String[]
+  level         SkillLevel
+  weightGrams   Int
+  weightClass   WeightClass
+  headSizeSqIn  Int
+  headSizeClass HeadSizeClass
+  balance       Balance
+  stringPattern StringPattern
+  playStyle     PlayStyle
+  stiffnessRA   Int?
+  swingWeight   Int?
+  beamWidthMm   String?
+  isActive      Boolean          @default(true)
+  categoryId    String
+  category      Category         @relation(fields: [categoryId], references: [id])
+  brandId       String
+  brand         Brand            @relation(fields: [brandId], references: [id])
+  variants      ProductVariant[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([brandId])
+}
+
+// Giá tính bằng VND, lưu số nguyên để tránh sai số số thực.
+model ProductVariant {
+  id            String      @id @default(cuid())
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  internalCode  String      @unique
+  gripSize      GripSize
+  condition     Condition
+  conditionNote String?
+  images        String[]
+  price         Int
+  originalPrice Int?
+  costPrice     Int?
+  stock         Int         @default(1)
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  @@index([productId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  @@unique([cartId, variantId])
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  addressId  String
+  address    Address     @relation(fields: [addressId], references: [id])
+  status     OrderStatus @default(PENDING)
+  totalPrice Int
+  note       String?
+  items      OrderItem[]
+  payment    Payment?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Lưu lại tên và giá tại thời điểm mua để đơn cũ không đổi khi sản phẩm đổi giá.
+model OrderItem {
+  id          String         @id @default(cuid())
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+  productName String
+  unitPrice   Int
+  unitCost    Int?
+  quantity    Int
+
+  @@index([orderId])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String        @unique
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  amount      Int
+  providerRef String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}

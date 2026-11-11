@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand: #c8102e;
+  --color-brand-dark: #9d0c24;
+  --color-ink: #111111;
+  --color-paper: #f5f5f3;
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Tiêu đề kiểu Wilson: chữ hoa, condensed, đậm */
+.display {
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
