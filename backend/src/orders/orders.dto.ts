@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 
@@ -17,7 +18,8 @@ export const ORDER_STATUSES = [
 
 export class ShippingAddressDto {
   @IsString() fullName: string;
-  @IsString() phone: string;
+  @Matches(/^0\d{9}$/, { message: 'Số điện thoại gồm 10 chữ số, bắt đầu bằng 0' })
+  phone: string;
   @IsString() line1: string;
   @IsOptional() @IsString() ward?: string;
   @IsOptional() @IsString() district?: string;

@@ -3,7 +3,7 @@
 import { Alert, Button, Form, Input } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { ErrorBox } from '@/components/ui/states';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -57,8 +57,18 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           <Input autoComplete="email" />
         </Form.Item>
         {!isLogin && (
-          <Form.Item name="phone" label="Số điện thoại">
-            <Input autoComplete="tel" />
+          <Form.Item
+            name="phone"
+            label="Số điện thoại"
+            getValueFromEvent={(e: ChangeEvent<HTMLInputElement>) =>
+              e.target.value.replace(/\D/g, '').slice(0, 10)
+            }
+            rules={[
+              { required: true, message: 'Nhập số điện thoại' },
+              { pattern: /^0\d{9}$/, message: '10 chữ số, bắt đầu bằng 0' },
+            ]}
+          >
+            <Input inputMode="numeric" autoComplete="tel" placeholder="0901234567" maxLength={10} />
           </Form.Item>
         )}
         <Form.Item

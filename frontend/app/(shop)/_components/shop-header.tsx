@@ -68,11 +68,15 @@ export function ShopHeader() {
               Đăng nhập
             </Link>
           )}
-          <Link href="/cart" aria-label="Giỏ hàng" className="relative">
+          <Link
+            href="/cart"
+            aria-label="Giỏ hàng"
+            className="relative inline-flex h-9 w-9 items-center justify-center"
+          >
             <ShoppingOutlined className="!text-xl !text-white" />
             {count > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center bg-brand px-1 text-[10px] font-bold">
-                {count}
+              <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold leading-none text-white">
+                {count > 99 ? '99+' : count}
               </span>
             )}
           </Link>

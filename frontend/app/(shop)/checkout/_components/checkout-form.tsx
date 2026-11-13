@@ -3,7 +3,7 @@
 import { Button, Form, Input, Radio } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { EmptyState, ErrorBox, Spinner } from '@/components/ui/states';
 import { ordersApi } from '@/lib/api';
 import { formatVnd, PAYMENT_LABEL, toOptions } from '@/lib/format';
@@ -61,9 +61,15 @@ export function CheckoutForm() {
           <Form.Item
             name="phone"
             label="Số điện thoại"
-            rules={[{ required: true, pattern: /^(0|\+84)\d{9}$/, message: 'Số điện thoại không hợp lệ' }]}
+            getValueFromEvent={(e: ChangeEvent<HTMLInputElement>) =>
+              e.target.value.replace(/\D/g, '').slice(0, 10)
+            }
+            rules={[
+              { required: true, message: 'Nhập số điện thoại' },
+              { pattern: /^0\d{9}$/, message: '10 chữ số, bắt đầu bằng 0' },
+            ]}
           >
-            <Input />
+            <Input inputMode="numeric" autoComplete="tel" placeholder="0901234567" maxLength={10} />
           </Form.Item>
         </div>
         <Form.Item name="line1" label="Số nhà, tên đường" rules={[{ required: true, message: 'Nhập địa chỉ' }]}>
