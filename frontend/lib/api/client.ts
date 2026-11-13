@@ -16,6 +16,27 @@ interface RequestOptions {
   query?: Record<string, string | number | undefined>;
 }
 
+/** Upload 1 file ảnh (multipart). Không set Content-Type để trình duyệt tự thêm boundary. */
+export async function uploadFile(path: string, file: File, token: string): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append('file', file);
+  let res: Response;
+  try {
+    res = await fetch(new URL(path, API_URL), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+  } catch {
+    throw new ApiError(0, 'Không kết nối được máy chủ. Hãy kiểm tra backend đã chạy chưa.');
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new ApiError(res.status, (Array.isArray(data?.message) ? data.message.join(', ') : data?.message) ?? `Lỗi ${res.status}`);
+  }
+  return res.json();
+}
+
 /** Hàm gọi API duy nhất của toàn bộ frontend. Mọi module trong lib/api đều đi qua đây. */
 export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const url = new URL(path, API_URL);

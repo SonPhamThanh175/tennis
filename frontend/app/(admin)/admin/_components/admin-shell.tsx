@@ -5,7 +5,6 @@ import {
   LogoutOutlined,
   ShoppingCartOutlined,
   TagsOutlined,
-  ThunderboltOutlined,
   InboxOutlined,
 } from '@ant-design/icons';
 import { Button, Layout, Menu } from 'antd';
@@ -17,8 +16,7 @@ const { Sider, Header, Content } = Layout;
 
 const ITEMS = [
   { key: '/admin', icon: <DashboardOutlined />, label: <Link href="/admin">Tổng quan</Link> },
-  { key: '/admin/inventory', icon: <InboxOutlined />, label: <Link href="/admin/inventory">Kho vợt cũ</Link> },
-  { key: '/admin/models', icon: <ThunderboltOutlined />, label: <Link href="/admin/models">Mẫu vợt</Link> },
+  { key: '/admin/inventory', icon: <InboxOutlined />, label: <Link href="/admin/inventory">Quản lý vợt cũ</Link> },
   { key: '/admin/taxonomy', icon: <TagsOutlined />, label: <Link href="/admin/taxonomy">Thương hiệu & danh mục</Link> },
   { key: '/admin/orders', icon: <ShoppingCartOutlined />, label: <Link href="/admin/orders">Đơn hàng</Link> },
 ];

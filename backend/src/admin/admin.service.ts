@@ -129,7 +129,7 @@ export class AdminService {
   listVariants(inStock?: boolean) {
     return this.prisma.productVariant.findMany({
       where: inStock === undefined ? undefined : { stock: inStock ? { gt: 0 } : 0 },
-      include: { product: { select: { id: true, name: true, slug: true } } },
+      include: { product: { include: { brand: true, category: true } } },
       orderBy: { internalCode: 'asc' },
     });
   }
