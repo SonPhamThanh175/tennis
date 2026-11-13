@@ -8,6 +8,7 @@ import { AppModule } from './app.module.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.set('trust proxy', 1);
   app.useStaticAssets(UPLOAD_DIR, { prefix: '/uploads' });
   // FRONTEND_URL: một hoặc nhiều origin, phân tách bằng dấu phẩy. Bỏ dấu "/" cuối để khớp header Origin.
   const origins = [

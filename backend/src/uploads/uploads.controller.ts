@@ -4,6 +4,7 @@ import {
   Controller,
   Post,
   Req,
+  ServiceUnavailableException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -41,17 +42,28 @@ interface CloudinaryConfig {
 /** CLOUDINARY_URL có dạng cloudinary://<api_key>:<api_secret>@<cloud_name>. */
 function parseCloudinaryUrl(raw?: string): CloudinaryConfig | null {
   if (!raw) return null;
+  const trimmed = raw.trim().replace(/^["']|["']$/g, '');
   try {
-    const u = new URL(raw);
+    const u = new URL(trimmed);
     if (u.protocol !== 'cloudinary:') return null;
-    return {
-      cloudName: u.hostname,
-      apiKey: decodeURIComponent(u.username),
-      apiSecret: decodeURIComponent(u.password),
-    };
+    const cloudName = u.hostname;
+    const apiKey = decodeURIComponent(u.username);
+    const apiSecret = decodeURIComponent(u.password);
+    if (!cloudName || !apiKey || !apiSecret) return null;
+    return { cloudName, apiKey, apiSecret };
   } catch {
     return null;
   }
+}
+
+function cloudinaryFromEnv(): CloudinaryConfig | null {
+  const fromUrl = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+  if (fromUrl) return fromUrl;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+  const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+  if (cloudName && apiKey && apiSecret) return { cloudName, apiKey, apiSecret };
+  return null;
 }
 
 async function uploadToCloudinary(c: CloudinaryConfig, buffer: Buffer): Promise<string> {
@@ -72,8 +84,10 @@ async function uploadToCloudinary(c: CloudinaryConfig, buffer: Buffer): Promise<
     method: 'POST',
     body,
   });
-  if (!res.ok) throw new BadGatewayException('Không thể tải ảnh lên kho lưu trữ');
-  const data = (await res.json()) as { secure_url: string };
+  const data = (await res.json()) as { secure_url?: string; error?: { message?: string } };
+  if (!res.ok || !data.secure_url) {
+    throw new BadGatewayException(data.error?.message ?? 'Không thể tải ảnh lên Cloudinary');
+  }
   return data.secure_url;
 }
 
@@ -86,18 +100,26 @@ export class UploadsController {
   @Post()
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_BYTES, files: 1 } }))
-  async upload(@UploadedFile() file: { buffer: Buffer } | undefined, @Req() req: Request) {
-    if (!file) throw new BadRequestException('Thiếu file ảnh (field "file")');
-    const ext = sniffExtension(file.buffer);
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_BYTES, files: 1 } }),
+  )
+  async upload(@UploadedFile() file: { buffer?: Buffer } | undefined, @Req() req: Request) {
+    if (!file?.buffer?.length) throw new BadRequestException('Thiếu file ảnh (field "file")');
+    const buffer = Buffer.from(file.buffer);
+    const ext = sniffExtension(buffer);
     if (!ext) throw new BadRequestException('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP');
 
-    const cloud = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
-    if (cloud) return { url: await uploadToCloudinary(cloud, file.buffer) };
+    const cloud = cloudinaryFromEnv();
+    if (cloud) return { url: await uploadToCloudinary(cloud, buffer) };
+    if (process.env.NODE_ENV === 'production') {
+      throw new ServiceUnavailableException(
+        'Chưa cấu hình Cloudinary trên Render. Đặt CLOUDINARY_URL hoặc CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET.',
+      );
+    }
 
     await mkdir(UPLOAD_DIR, { recursive: true });
     const name = `${randomUUID()}.${ext}`;
-    await writeFile(join(UPLOAD_DIR, name), file.buffer);
+    await writeFile(join(UPLOAD_DIR, name), buffer);
 
     const base = process.env.PUBLIC_API_URL ?? `${req.protocol}://${req.get('host')}`;
     return { url: `${base}/uploads/${name}` };
