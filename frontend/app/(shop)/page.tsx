@@ -43,20 +43,29 @@ const PROMISES = [
 export default function Home() {
   return (
     <>
-      <section className="bg-ink text-white">
-        <div className="mx-auto max-w-7xl px-4 py-24 md:py-36">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-brand">Vợt tennis cũ tuyển chọn</p>
-          <h1 className="display max-w-3xl text-6xl md:text-8xl">
+      <section className="relative overflow-hidden text-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero-court.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/25" />
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:py-24 md:py-36">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-brand sm:mb-4 sm:text-sm sm:tracking-[0.3em]">
+            Vợt tennis cũ tuyển chọn
+          </p>
+          <h1 className="display max-w-3xl text-4xl leading-tight sm:text-6xl md:text-8xl">
             Chơi vợt xịn,
             <br />
             <span className="text-brand">giá hợp lý.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-neutral-300">
+          <p className="mt-4 max-w-xl text-sm text-neutral-200 sm:mt-6 sm:text-base">
             Wilson, Babolat, Head, Yonex… đã qua kiểm định, mô tả đúng tình trạng, bảo đảm đổi trả.
           </p>
           <Link
             href="/products"
-            className="display mt-10 inline-block bg-brand px-10 py-4 text-2xl text-white hover:bg-brand-dark"
+            className="display mt-8 inline-block w-full bg-brand px-8 py-3.5 text-center text-xl text-white shadow-lg hover:bg-brand-dark sm:mt-10 sm:w-auto sm:px-10 sm:py-4 sm:text-2xl"
           >
             Xem kho vợt
           </Link>
