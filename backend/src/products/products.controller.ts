@@ -15,6 +15,11 @@ export class ProductsController {
     return this.products.list(query);
   }
 
+  @Get('products/:slug/related')
+  related(@Param('slug') slug: string) {
+    return this.products.related(slug);
+  }
+
   @Get('products/:slug')
   bySlug(@Param('slug') slug: string) {
     return this.products.bySlug(slug);

@@ -37,6 +37,7 @@ export const productsApi = {
   list: (query: ProductQuery = {}) =>
     request<Paginated<Product>>('/products', { query: { ...query } }),
   bySlug: (slug: string) => request<Product>(`/products/${encodeURIComponent(slug)}`),
+  related: (slug: string) => request<Product[]>(`/products/${encodeURIComponent(slug)}/related`),
   categories: () => request<Category[]>('/categories'),
   brands: () => request<Brand[]>('/brands'),
 };

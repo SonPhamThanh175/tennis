@@ -107,6 +107,53 @@ export class ProductsService {
     return product;
   }
 
+  /** Ưu tiên cùng hãng; thiếu thì bù cùng trọng lượng (gram), tối đa 6 cây còn hàng. */
+  async related(slug: string) {
+    const product = await this.bySlug(slug);
+    const base = {
+      isActive: true,
+      id: { not: product.id },
+      brand: { isActive: true },
+      category: { isActive: true },
+      variants: { some: { stock: { gt: 0 } } },
+    } satisfies Prisma.ProductWhereInput;
+
+    const byBrand = await this.prisma.product.findMany({
+      where: { ...base, brandId: product.brandId },
+      include: publicProductInclude,
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    });
+    if (byBrand.length >= 6) return byBrand;
+
+    const taken = new Set(byBrand.map((p) => p.id));
+    const byWeight = await this.prisma.product.findMany({
+      where: {
+        ...base,
+        id: { notIn: [product.id, ...taken] },
+        weightGrams: product.weightGrams,
+      },
+      include: publicProductInclude,
+      orderBy: { createdAt: 'desc' },
+      take: 6 - byBrand.length,
+    });
+    const mixed = [...byBrand, ...byWeight];
+    if (mixed.length >= 6) return mixed;
+
+    const taken2 = new Set(mixed.map((p) => p.id));
+    const byClass = await this.prisma.product.findMany({
+      where: {
+        ...base,
+        id: { notIn: [product.id, ...taken2] },
+        weightClass: product.weightClass,
+      },
+      include: publicProductInclude,
+      orderBy: { createdAt: 'desc' },
+      take: 6 - mixed.length,
+    });
+    return [...mixed, ...byClass];
+  }
+
   categories() {
     return this.prisma.category.findMany({
       where: { isActive: true },
