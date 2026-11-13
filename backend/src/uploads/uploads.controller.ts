@@ -39,21 +39,36 @@ interface CloudinaryConfig {
   apiSecret: string;
 }
 
-/** CLOUDINARY_URL có dạng cloudinary://<api_key>:<api_secret>@<cloud_name>. */
+/** Cloud name trên Dashboard dạng dxxxx, không phải thư mục "Root" trong Media Library. */
+function normalizeCloudName(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\.cloudinary\.com$/i, '')
+    .replace(/^https?:\/\//i, '');
+}
+
+function assertCloudName(cloudName: string): string {
+  const name = normalizeCloudName(cloudName);
+  if (!name || /^root$/i.test(name) || /cloudinary\.com/i.test(name) || !/^[a-z0-9][a-z0-9_-]{1,63}$/i.test(name)) {
+    throw new ServiceUnavailableException(
+      `Cloud name không hợp lệ (${cloudName}). Vào Cloudinary Dashboard → Product environment credentials, copy đúng "Cloud name" (ví dụ dabcxyz123), không dùng thư mục Root.`,
+    );
+  }
+  return name;
+}
+
+/** CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name> */
 function parseCloudinaryUrl(raw?: string): CloudinaryConfig | null {
   if (!raw) return null;
-  const trimmed = raw.trim().replace(/^["']|["']$/g, '');
-  try {
-    const u = new URL(trimmed);
-    if (u.protocol !== 'cloudinary:') return null;
-    const cloudName = u.hostname;
-    const apiKey = decodeURIComponent(u.username);
-    const apiSecret = decodeURIComponent(u.password);
-    if (!cloudName || !apiKey || !apiSecret) return null;
-    return { cloudName, apiKey, apiSecret };
-  } catch {
-    return null;
-  }
+  const trimmed = raw.trim().replace(/^["']|["']$/g, '').replace(/^CLOUDINARY_URL=/i, '');
+  const m = trimmed.match(/^cloudinary:\/\/([^:]+):(.+)@([^/\s]+)$/i);
+  if (!m) return null;
+  return {
+    apiKey: decodeURIComponent(m[1]),
+    apiSecret: decodeURIComponent(m[2]),
+    cloudName: assertCloudName(m[3]),
+  };
 }
 
 function cloudinaryFromEnv(): CloudinaryConfig | null {
@@ -62,7 +77,9 @@ function cloudinaryFromEnv(): CloudinaryConfig | null {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
   const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
   const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
-  if (cloudName && apiKey && apiSecret) return { cloudName, apiKey, apiSecret };
+  if (cloudName && apiKey && apiSecret) {
+    return { cloudName: assertCloudName(cloudName), apiKey, apiSecret };
+  }
   return null;
 }
 
