@@ -80,6 +80,8 @@ export interface Product {
   swingWeight: number | null;
   beamWidthMm: string | null;
   isActive: boolean;
+  categoryId: string;
+  brandId: string;
   category: Category;
   brand: Brand;
   variants: Variant[];

@@ -63,6 +63,11 @@ export class AdminController {
     );
   }
 
+  @Get('variants/:id')
+  getVariant(@Param('id') id: string) {
+    return this.admin.getVariant(id);
+  }
+
   @Post('products/:id/variants')
   createVariant(@Param('id') id: string, @Body() dto: CreateVariantDto) {
     return this.admin.createVariant(id, dto);

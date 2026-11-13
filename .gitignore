@@ -6,5 +6,4 @@ dist
 *.log
 coverage
 backend/src/generated
-uploads
-backend/uploads
+/backend/uploads

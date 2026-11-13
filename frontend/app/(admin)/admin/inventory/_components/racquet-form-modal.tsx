@@ -1,7 +1,7 @@
 'use client';
 
-import { App, Divider, Form, Input, InputNumber, Modal, Select } from 'antd';
-import { useState } from 'react';
+import { App, Divider, Form, Input, InputNumber, Modal, Select, Spin } from 'antd';
+import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import {
   BALANCE_LABEL,
@@ -55,15 +55,56 @@ const GRIPS: GripSize[] = ['G0', 'G1', 'G2', 'G3', 'G4', 'G5'];
 const req = [{ required: true, message: 'Bắt buộc' }];
 
 interface Props {
-  racquet: AdminVariant | null;
+  /** id cây vợt cần sửa; null = thêm mới. */
+  variantId: string | null;
   brands: Brand[];
   categories: Category[];
   onClose: () => void;
   onSaved: () => void;
 }
 
-/** Một form duy nhất cho một cây vợt: thông số + tình trạng + giá + ảnh. */
-export function RacquetFormModal({ racquet, brands, categories, onClose, onSaved }: Props) {
+/** Khi sửa: gọi API lấy chi tiết cây vợt rồi mới dựng form để đổ dữ liệu. */
+export function RacquetFormModal({ variantId, ...rest }: Props) {
+  const { token } = useAuth();
+  const { message } = App.useApp();
+  const [detail, setDetail] = useState<AdminVariant | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!variantId) return;
+    let cancelled = false;
+    adminApi
+      .variant(token!, variantId)
+      .then((d) => !cancelled && setDetail(d))
+      .catch((e) => {
+        if (cancelled) return;
+        setFailed(true);
+        message.error(e instanceof Error ? e.message : 'Không tải được thông tin cây vợt');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [variantId, token, message]);
+
+  if (variantId && !detail) {
+    return (
+      <Modal open title="Sửa cây vợt" footer={null} onCancel={rest.onClose}>
+        <div className="flex justify-center py-10">
+          {failed ? 'Không tải được dữ liệu' : <Spin />}
+        </div>
+      </Modal>
+    );
+  }
+  return <RacquetForm racquet={detail} {...rest} />;
+}
+
+function RacquetForm({
+  racquet,
+  brands,
+  categories,
+  onClose,
+  onSaved,
+}: Omit<Props, 'variantId'> & { racquet: AdminVariant | null }) {
   const { token } = useAuth();
   const { message } = App.useApp();
   const [form] = Form.useForm<FormValues>();
@@ -123,8 +164,8 @@ export function RacquetFormModal({ racquet, brands, categories, onClose, onSaved
   const initial = racquet
     ? {
         ...racquet.product,
-        brandId: racquet.product.brand.id,
-        categoryId: racquet.product.category.id,
+        brandId: racquet.product.brandId,
+        categoryId: racquet.product.categoryId,
         internalCode: racquet.internalCode,
         gripSize: racquet.gripSize,
         condition: racquet.condition,

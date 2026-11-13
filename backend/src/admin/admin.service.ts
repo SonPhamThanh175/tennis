@@ -134,6 +134,15 @@ export class AdminService {
     });
   }
 
+  async getVariant(id: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id },
+      include: { product: { include: { brand: true, category: true } } },
+    });
+    if (!variant) throw new NotFoundException('Không tìm thấy cây vợt');
+    return variant;
+  }
+
   async createVariant(productId: string, dto: CreateVariantDto) {
     await this.ensureProduct(productId);
     return this.guardUnique(() =>

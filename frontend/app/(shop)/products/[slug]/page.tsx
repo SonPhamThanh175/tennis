@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Spinner } from '@/components/ui/states';
 import { ApiError, productsApi } from '@/lib/api';
+import { ImageGallery } from './_components/image-gallery';
 import { SpecMatrix } from './_components/spec-matrix';
 import { UnitPicker } from './_components/unit-picker';
 
@@ -11,18 +12,11 @@ async function Detail({ params }: { params: Promise<{ slug: string }> }) {
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
   });
-  const image = product.variants[0]?.images[0] ?? product.images[0];
+  const images = [...new Set([...product.variants.flatMap((v) => v.images), ...product.images])];
 
   return (
     <div className="grid gap-12 md:grid-cols-2">
-      <div className="aspect-square bg-paper">
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={product.name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-8xl text-neutral-300">🎾</div>
-        )}
-      </div>
+      <ImageGallery images={images} alt={product.name} />
       <div className="space-y-8">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-brand">{product.brand.name}</p>

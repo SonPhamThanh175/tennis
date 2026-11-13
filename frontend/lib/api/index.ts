@@ -72,6 +72,7 @@ export const adminApi = {
   deactivateProduct: (token: string, id: string) =>
     request<Product>(`/admin/products/${id}`, { method: 'DELETE', token }),
 
+  variant: (token: string, id: string) => request<AdminVariant>(`/admin/variants/${id}`, { token }),
   variants: (token: string, inStock?: boolean) =>
     request<AdminVariant[]>('/admin/variants', {
       token,

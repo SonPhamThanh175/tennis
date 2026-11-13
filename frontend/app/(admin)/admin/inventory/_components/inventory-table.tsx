@@ -71,7 +71,7 @@ export function InventoryTable() {
         <div>
           <div className="font-medium">{r.product.name}</div>
           <div className="text-xs text-neutral-500">
-            {r.product.brand.name} · {r.product.weightGrams}g · {r.product.headSizeSqIn} in²
+            {r?.product?.brand?.name} · {r?.product?.weightGrams}g · {r?.product?.headSizeSqIn} in²
           </div>
         </div>
       ),
@@ -140,7 +140,7 @@ export function InventoryTable() {
       <Table rowKey="id" loading={loading} columns={columns} dataSource={rows} scroll={{ x: 'max-content' }} />
       {editing && (
         <RacquetFormModal
-          racquet={editing === 'new' ? null : editing}
+          variantId={editing === 'new' ? null : editing.id}
           brands={brands.filter((b) => b.isActive)}
           categories={categories.filter((c) => c.isActive)}
           onClose={() => setEditing(null)}
