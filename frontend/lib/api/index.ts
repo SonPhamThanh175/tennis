@@ -85,6 +85,12 @@ export const adminApi = {
     request<Variant>(`/admin/variants/${id}`, { method: 'PATCH', token, body }),
   deleteVariant: (token: string, id: string) =>
     request<{ ok: boolean }>(`/admin/variants/${id}`, { method: 'DELETE', token }),
+  bulkDeleteVariants: (token: string, ids: string[]) =>
+    request<{ deleted: number; hidden: number; missing: number }>('/admin/variants/bulk-delete', {
+      method: 'POST',
+      token,
+      body: { ids },
+    }),
 
   taxonomy: (token: string, kind: TaxonomyKind) =>
     request<TaxonomyItem[]>(`/admin/${kind}`, { token }),

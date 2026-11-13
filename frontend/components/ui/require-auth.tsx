@@ -1,9 +1,9 @@
 'use client';
 
-import { Result } from 'antd';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Spinner } from '@/components/ui/states';
+import { EmptyState, Spinner } from '@/components/ui/states';
 import { useAuth } from '@/providers/auth-provider';
 import type { Role } from '@/types/api';
 
@@ -18,7 +18,16 @@ export function RequireAuth({ role, children }: { role?: Role; children: React.R
 
   if (!ready || !user) return <Spinner />;
   if (role && user.role !== role) {
-    return <Result status="403" title="403" subTitle="Bạn không có quyền truy cập trang này." />;
+    return (
+      <EmptyState
+        message="Bạn không có quyền truy cập trang này."
+        action={
+          <Link href="/" className="text-sm font-semibold uppercase text-brand hover:underline">
+            Về trang chủ
+          </Link>
+        }
+      />
+    );
   }
   return <>{children}</>;
 }

@@ -1,6 +1,8 @@
 'use client';
 
-import { App, Divider, Form, Input, InputNumber, Modal, Select, Spin } from 'antd';
+import { App, Divider, Form, Input, InputNumber, Select } from 'antd';
+import { Modal } from '@/components/ui/modal';
+import { Spinner } from '@/components/ui/states';
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api';
 import {
@@ -87,9 +89,9 @@ export function RacquetFormModal({ variantId, ...rest }: Props) {
 
   if (variantId && !detail) {
     return (
-      <Modal open title="Sửa cây vợt" footer={null} onCancel={rest.onClose}>
+      <Modal open title="Sửa cây vợt" footer={null} onClose={rest.onClose}>
         <div className="flex justify-center py-10">
-          {failed ? 'Không tải được dữ liệu' : <Spin />}
+          {failed ? 'Không tải được dữ liệu' : <Spinner />}
         </div>
       </Modal>
     );
@@ -183,8 +185,7 @@ function RacquetForm({
       cancelText="Hủy"
       confirmLoading={saving}
       onOk={submit}
-      onCancel={onClose}
-      destroyOnHidden
+      onClose={onClose}
     >
       <Form form={form} layout="vertical" initialValues={initial}>
         <Divider titlePlacement="start">Ảnh thực tế</Divider>

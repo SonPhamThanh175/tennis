@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, Roles } from '../auth/auth.guard.js';
 import {
+  BulkVariantIdsDto,
   CreateProductDto,
   CreateTaxonomyDto,
   CreateVariantDto,
@@ -81,6 +82,11 @@ export class AdminController {
   @Delete('variants/:id')
   deleteVariant(@Param('id') id: string) {
     return this.admin.deleteVariant(id);
+  }
+
+  @Post('variants/bulk-delete')
+  bulkDeleteVariants(@Body() dto: BulkVariantIdsDto) {
+    return this.admin.bulkDeleteVariants(dto.ids);
   }
 
   @Get('brands')

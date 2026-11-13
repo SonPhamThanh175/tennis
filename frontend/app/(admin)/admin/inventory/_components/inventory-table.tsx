@@ -18,6 +18,7 @@ export function InventoryTable() {
   const [loading, setLoading] = useState(true);
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [editing, setEditing] = useState<AdminVariant | 'new' | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,6 +41,21 @@ export function InventoryTable() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function bulkDelete() {
+    try {
+      const r = await adminApi.bulkDeleteVariants(token!, selected);
+      const parts = [
+        r.deleted ? `đã xóa ${r.deleted}` : '',
+        r.hidden ? `đã ẩn ${r.hidden} (đã có đơn)` : '',
+      ].filter(Boolean);
+      message.success(parts.join(', ') || 'Xong');
+      setSelected([]);
+      await load();
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : 'Không thể xóa');
+    }
+  }
 
   async function run(action: () => Promise<unknown>, okMsg?: string) {
     try {
@@ -143,15 +159,37 @@ export function InventoryTable() {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-sm">
           <Switch checked={onlyInStock} onChange={setOnlyInStock} /> Chỉ hiện vợt còn hàng
+          {selected.length > 0 && (
+            <Popconfirm
+              title={`Xóa ${selected.length} cây đã chọn?`}
+              description="Cây đã có đơn sẽ được ẩn khỏi cửa hàng, không xóa lịch sử."
+              okText="Xóa / ẩn"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+              onConfirm={bulkDelete}
+            >
+              <Button danger>Xóa đã chọn ({selected.length})</Button>
+            </Popconfirm>
+          )}
         </div>
         <Button type="primary" onClick={() => setEditing('new')}>
           Thêm vợt cũ
         </Button>
       </div>
-      <Table rowKey="id" loading={loading} columns={columns} dataSource={rows} scroll={{ x: 'max-content' }} />
+      <Table
+        rowKey="id"
+        loading={loading}
+        columns={columns}
+        dataSource={rows}
+        scroll={{ x: 'max-content' }}
+        rowSelection={{
+          selectedRowKeys: selected,
+          onChange: (keys) => setSelected(keys.map(String)),
+        }}
+      />
       {editing && (
         <RacquetFormModal
           variantId={editing === 'new' ? null : editing.id}

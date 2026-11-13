@@ -201,6 +201,40 @@ export class AdminService {
     return { ok: true };
   }
 
+  /** Xóa nhiều cây. Cây đã có đơn thì ẩn sản phẩm, không xóa lịch sử. */
+  async bulkDeleteVariants(ids: string[]) {
+    let deleted = 0;
+    let hidden = 0;
+    let missing = 0;
+    for (const id of [...new Set(ids)]) {
+      const variant = await this.prisma.productVariant.findUnique({
+        where: { id },
+        include: { _count: { select: { orderItems: true } } },
+      });
+      if (!variant) {
+        missing += 1;
+        continue;
+      }
+      if (variant._count.orderItems > 0) {
+        await this.prisma.product.update({
+          where: { id: variant.productId },
+          data: { isActive: false },
+        });
+        hidden += 1;
+        continue;
+      }
+      await this.prisma.$transaction(async (tx) => {
+        await tx.productVariant.delete({ where: { id } });
+        const leftover = await tx.productVariant.count({ where: { productId: variant.productId } });
+        if (leftover === 0) {
+          await tx.product.delete({ where: { id: variant.productId } }).catch(() => undefined);
+        }
+      });
+      deleted += 1;
+    }
+    return { deleted, hidden, missing };
+  }
+
   // ---- Thương hiệu / danh mục ----
 
   listTaxonomy(kind: Taxonomy) {

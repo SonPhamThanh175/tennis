@@ -1,8 +1,10 @@
 'use client';
 
-import { Alert, App, Button, Tag } from 'antd';
+import { App, Tag } from 'antd';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/states';
 import { CONDITION_LABEL, CONDITION_TAG_COLOR, formatVnd, GRIP_LABEL } from '@/lib/format';
 import { useAuth } from '@/providers/auth-provider';
 import { useCart } from '@/providers/cart-provider';
@@ -18,7 +20,7 @@ export function UnitPicker({ variants }: { variants: Variant[] }) {
   const { message } = App.useApp();
   const selected = available.find((v) => v.id === selectedId);
 
-  if (available.length === 0) return <Alert type="warning" title="Mẫu này đã bán hết." showIcon />;
+  if (available.length === 0) return <EmptyState message="Mẫu này đã bán hết." />;
 
   async function onAdd() {
     if (!selected) return;
@@ -62,16 +64,19 @@ export function UnitPicker({ variants }: { variants: Variant[] }) {
       </ul>
 
       {selected?.conditionNote && (
-        <Alert type="info" showIcon title="Tình trạng thực tế" description={selected.conditionNote} />
+        <p className="border border-neutral-200 bg-paper px-4 py-3 text-sm text-neutral-700">
+          <span className="font-semibold">Tình trạng thực tế: </span>
+          {selected.conditionNote}
+        </p>
       )}
 
       {user ? (
-        <Button type="primary" size="large" block loading={busy} onClick={onAdd}>
-          THÊM VÀO GIỎ · {selected && formatVnd(selected.price)}
+        <Button block loading={busy} onClick={onAdd}>
+          Thêm vào giỏ · {selected && formatVnd(selected.price)}
         </Button>
       ) : (
-        <Link href="/login">
-          <Button type="primary" size="large" block>ĐĂNG NHẬP ĐỂ MUA</Button>
+        <Link href="/login" className="block">
+          <Button block>Đăng nhập để mua</Button>
         </Link>
       )}
       <p className="text-xs text-neutral-500">Đã kiểm định · Đổi trả trong 7 ngày · Mỗi cây chỉ có 1 chiếc</p>

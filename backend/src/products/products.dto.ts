@@ -116,6 +116,11 @@ export class UpdateVariantDto {
   @IsOptional() @IsInt() @Min(0) stock?: number;
 }
 
+export class BulkVariantIdsDto {
+  @IsArray() @ArrayMinSize(1) @IsString({ each: true })
+  ids: string[];
+}
+
 /** Dùng chung cho thương hiệu và danh mục. */
 export class CreateTaxonomyDto {
   @IsString() @IsNotEmpty() name: string;

@@ -1,8 +1,9 @@
 'use client';
 
 import { MenuOutlined, ShoppingOutlined, UserOutlined } from '@ant-design/icons';
-import { Badge, Drawer, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
 import Link from 'next/link';
+import { Drawer } from '@/components/ui/drawer';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
@@ -67,10 +68,13 @@ export function ShopHeader() {
               Đăng nhập
             </Link>
           )}
-          <Link href="/cart" aria-label="Giỏ hàng">
-            <Badge count={count} size="small" color="#c8102e" offset={[2, 0]}>
-              <ShoppingOutlined className="!text-xl !text-white" />
-            </Badge>
+          <Link href="/cart" aria-label="Giỏ hàng" className="relative">
+            <ShoppingOutlined className="!text-xl !text-white" />
+            {count > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center bg-brand px-1 text-[10px] font-bold">
+                {count}
+              </span>
+            )}
           </Link>
           <button
             type="button"
@@ -82,13 +86,7 @@ export function ShopHeader() {
           </button>
         </div>
       </div>
-      <Drawer
-        title="Menu"
-        placement="right"
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        size={280}
-      >
+      <Drawer title="Menu" side="right" open={menuOpen} onClose={() => setMenuOpen(false)}>
         <nav className="flex flex-col gap-1">
           {NAV.map((n) => (
             <Link

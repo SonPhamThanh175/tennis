@@ -1,6 +1,7 @@
 'use client';
 
-import { App, Button, Card, Form, Input, Modal, Popconfirm, Switch, Table } from 'antd';
+import { App, Button, Card, Form, Input, Popconfirm, Switch, Table } from 'antd';
+import { Modal } from '@/components/ui/modal';
 import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi, type TaxonomyKind } from '@/lib/api';
@@ -116,8 +117,7 @@ export function Taxonomy({ kind, title }: { kind: TaxonomyKind; title: string })
         okText="Lưu"
         cancelText="Hủy"
         onOk={onSave}
-        onCancel={() => setEditing(null)}
-        destroyOnHidden
+        onClose={() => setEditing(null)}
       >
         <Form
           form={form}
