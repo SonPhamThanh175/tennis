@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { EmptyState, Spinner } from '@/components/ui/states';
+import { EmptyState, ErrorBox, Spinner } from '@/components/ui/states';
 import { productsApi } from '@/lib/api';
 import type { Condition, PlayStyle, SkillLevel } from '@/types/api';
 import { RacquetCard } from '../_components/racquet-card';
@@ -9,18 +9,26 @@ import { PageLinks } from './_components/page-links';
 async function Listing({ searchParams }: { searchParams: Promise<ProductParams> }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
-  const [{ items, total, limit }, brands] = await Promise.all([
-    productsApi.list({
-      q: sp.q,
-      brand: sp.brand,
-      level: sp.level as SkillLevel | undefined,
-      condition: sp.condition as Condition | undefined,
-      playStyle: sp.playStyle as PlayStyle | undefined,
-      page,
-      limit: 12,
-    }),
-    productsApi.brands(),
-  ]);
+  let items;
+  let total;
+  let limit;
+  let brands;
+  try {
+    [{ items, total, limit }, brands] = await Promise.all([
+      productsApi.list({
+        q: sp.q,
+        brand: sp.brand,
+        level: sp.level as SkillLevel | undefined,
+        condition: sp.condition as Condition | undefined,
+        playStyle: sp.playStyle as PlayStyle | undefined,
+        page,
+        limit: 12,
+      }),
+      productsApi.brands(),
+    ]);
+  } catch (e) {
+    return <ErrorBox message={e instanceof Error ? e.message : 'Không tải được danh sách vợt.'} />;
+  }
 
   return (
     <div className="grid gap-10 md:grid-cols-[220px_1fr]">

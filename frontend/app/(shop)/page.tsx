@@ -1,11 +1,17 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Spinner } from '@/components/ui/states';
+import { ErrorBox, Spinner } from '@/components/ui/states';
 import { productsApi } from '@/lib/api';
 import { RacquetCard } from './_components/racquet-card';
 
 async function Featured() {
-  const [{ items }, brands] = await Promise.all([productsApi.list({ limit: 8 }), productsApi.brands()]);
+  let items;
+  let brands;
+  try {
+    [{ items }, brands] = await Promise.all([productsApi.list({ limit: 8 }), productsApi.brands()]);
+  } catch (e) {
+    return <ErrorBox message={e instanceof Error ? e.message : 'Không tải được danh sách vợt.'} />;
+  }
   return (
     <>
       <div className="mb-12 flex flex-wrap gap-3">

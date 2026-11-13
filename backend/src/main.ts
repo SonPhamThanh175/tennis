@@ -10,11 +10,14 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(UPLOAD_DIR, { prefix: '/uploads' });
   // FRONTEND_URL: một hoặc nhiều origin, phân tách bằng dấu phẩy. Bỏ dấu "/" cuối để khớp header Origin.
-  const origins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
-    .split(',')
+  const origins = [
+    'http://localhost:3000',
+    'https://tennis-gules-three.vercel.app',
+    ...(process.env.FRONTEND_URL ?? '').split(','),
+  ]
     .map((o) => o.trim().replace(/\/+$/, ''))
     .filter(Boolean);
-  app.enableCors({ origin: origins });
+  app.enableCors({ origin: [...new Set(origins)] });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true }),
   );

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { Spinner } from '@/components/ui/states';
+import { ErrorBox, Spinner } from '@/components/ui/states';
 import { ApiError, productsApi } from '@/lib/api';
 import { ImageGallery } from './_components/image-gallery';
 import { SpecMatrix } from './_components/spec-matrix';
@@ -10,8 +10,11 @@ async function Detail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = await productsApi.bySlug(slug).catch((e) => {
     if (e instanceof ApiError && e.status === 404) notFound();
-    throw e;
+    return null;
   });
+  if (!product) {
+    return <ErrorBox message="Không kết nối được máy chủ. Kiểm tra BACKEND_URL trên Vercel và backend Render đã chạy." />;
+  }
   const images = [...new Set([...product.variants.flatMap((v) => v.images), ...product.images])];
 
   return (
