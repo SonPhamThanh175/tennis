@@ -9,7 +9,12 @@ import { AppModule } from './app.module.js';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useStaticAssets(UPLOAD_DIR, { prefix: '/uploads' });
-  app.enableCors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:3000' });
+  // FRONTEND_URL: một hoặc nhiều origin, phân tách bằng dấu phẩy. Bỏ dấu "/" cuối để khớp header Origin.
+  const origins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+  app.enableCors({ origin: origins });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true }),
   );
