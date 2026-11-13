@@ -19,7 +19,7 @@ import type {
   Variant,
   VariantInput,
 } from '@/types/api';
-import { request } from './client';
+import { request, uploadFile } from './client';
 
 export { ApiError } from './client';
 
@@ -61,6 +61,8 @@ export const ordersApi = {
 
 export const adminApi = {
   stats: (token: string) => request<AdminStats>('/admin/stats', { token }),
+
+  uploadImage: (token: string, file: File) => uploadFile('/admin/uploads', file, token),
 
   products: (token: string) => request<Product[]>('/admin/products', { token }),
   createProduct: (token: string, body: CreateProductInput) =>

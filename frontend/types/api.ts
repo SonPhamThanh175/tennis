@@ -58,7 +58,7 @@ export interface Variant {
 
 export interface AdminVariant extends Variant {
   costPrice: number | null;
-  product: { id: string; name: string; slug: string };
+  product: Omit<Product, 'variants'>;
 }
 
 /** Mẫu vợt: thông số kỹ thuật dùng chung cho các cây cùng mẫu. */
