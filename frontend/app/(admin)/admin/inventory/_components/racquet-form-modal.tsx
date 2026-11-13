@@ -142,7 +142,7 @@ function RacquetForm({
     setSaving(true);
     try {
       if (racquet) {
-        await adminApi.updateProduct(token!, racquet.product.id, spec);
+        await adminApi.updateProduct(token!, racquet.product.id, { ...spec, images: variant.images });
         await adminApi.updateVariant(token!, racquet.id, variant);
       } else {
         await adminApi.createProduct(token!, {
@@ -172,7 +172,7 @@ function RacquetForm({
         price: racquet.price,
         originalPrice: racquet.originalPrice ?? undefined,
         costPrice: racquet.costPrice ?? undefined,
-        images: racquet.images,
+        images: [...new Set([...(racquet.images ?? []), ...(racquet.product.images ?? [])])],
       }
     : { weightGrams: 300, headSizeSqIn: 100, condition: 'GOOD', gripSize: 'G2', images: [] };
 
