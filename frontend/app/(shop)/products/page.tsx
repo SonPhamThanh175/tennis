@@ -1,8 +1,10 @@
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { EmptyState, ErrorBox, Spinner } from '@/components/ui/states';
 import { productsApi } from '@/lib/api';
 import type { Condition, PlayStyle, SkillLevel } from '@/types/api';
 import { RacquetCard } from '../_components/racquet-card';
+import { FilterDrawer } from './_components/filter-drawer';
 import { Filters, type ProductParams } from './_components/filters';
 import { PageLinks } from './_components/page-links';
 
@@ -30,11 +32,27 @@ async function Listing({ searchParams }: { searchParams: Promise<ProductParams> 
     return <ErrorBox message={e instanceof Error ? e.message : 'Không tải được danh sách vợt.'} />;
   }
 
+  const filterCount = [sp.q, sp.brand, sp.level, sp.condition, sp.playStyle].filter(Boolean).length;
+
   return (
     <div className="grid gap-10 md:grid-cols-[220px_1fr]">
-      <Filters current={sp} brands={brands} />
+      <div className="hidden md:block">
+        <Filters current={sp} brands={brands} />
+      </div>
       <div>
-        <p className="mb-6 text-sm text-neutral-500">{total} cây vợt</p>
+        <div className="mb-4 flex items-center justify-between gap-3 md:mb-6">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-neutral-500">{total} cây vợt</p>
+            {filterCount > 0 && (
+              <Link href="/products" className="text-sm font-semibold text-brand hover:underline">
+                Xóa bộ lọc
+              </Link>
+            )}
+          </div>
+          <FilterDrawer activeCount={filterCount}>
+            <Filters current={sp} brands={brands} />
+          </FilterDrawer>
+        </div>
         {items.length === 0 ? (
           <EmptyState message="Không tìm thấy vợt phù hợp." />
         ) : (
@@ -53,7 +71,7 @@ async function Listing({ searchParams }: { searchParams: Promise<ProductParams> 
 export default function ProductsPage({ searchParams }: PageProps<'/products'>) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="display mb-8 text-6xl">Vợt tennis</h1>
+      <h1 className="display mb-6 text-4xl md:mb-8 md:text-6xl">Vợt tennis</h1>
       <Suspense fallback={<Spinner />}>
         <Listing searchParams={searchParams as Promise<ProductParams>} />
       </Suspense>

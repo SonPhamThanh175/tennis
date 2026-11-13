@@ -56,9 +56,14 @@ function Group({
 const toOpts = (m: Record<string, string>) => Object.entries(m).map(([value, label]) => ({ value, label }));
 
 export function Filters({ current, brands }: { current: ProductParams; brands: Brand[] }) {
+  const hasFilter = Boolean(current.q || current.brand || current.level || current.condition || current.playStyle);
   return (
     <aside className="space-y-8">
       <form action="/products">
+        {current.brand && <input type="hidden" name="brand" value={current.brand} />}
+        {current.level && <input type="hidden" name="level" value={current.level} />}
+        {current.condition && <input type="hidden" name="condition" value={current.condition} />}
+        {current.playStyle && <input type="hidden" name="playStyle" value={current.playStyle} />}
         <input
           name="q"
           defaultValue={current.q}
@@ -66,6 +71,14 @@ export function Filters({ current, brands }: { current: ProductParams; brands: B
           className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-ink"
         />
       </form>
+      {hasFilter && (
+        <Link
+          href="/products"
+          className="inline-block text-sm font-semibold text-brand underline-offset-2 hover:underline"
+        >
+          Xóa bộ lọc
+        </Link>
+      )}
       <Group title="Thương hiệu" param="brand" current={current} options={brands.map((b) => ({ value: b.slug, label: b.name }))} />
       <Group title="Tình trạng" param="condition" current={current} options={toOpts(CONDITION_LABEL)} />
       <Group title="Trình độ" param="level" current={current} options={toOpts(LEVEL_LABEL)} />

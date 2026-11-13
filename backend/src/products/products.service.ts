@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { slugify } from '../common/racquet.js';
 import { ListProductsQuery } from './products.dto.js';
 
 /** API công khai không bao giờ trả costPrice (giá nhập). */
@@ -44,12 +45,15 @@ export class ProductsService {
       }),
     };
 
+    const term = q.q?.trim();
+    const searchIds = term ? await this.idsMatchingSearch(term) : undefined;
+
     const where: Prisma.ProductWhereInput = {
       isActive: true,
       brand: { isActive: true, ...(q.brand && { slug: q.brand }) },
       category: { isActive: true, ...(q.category && { slug: q.category }) },
       variants: { some: variantFilter },
-      ...(q.q && { name: { contains: q.q, mode: 'insensitive' } }),
+      ...(searchIds && { id: { in: searchIds } }),
       ...(q.level && { level: q.level }),
       ...(q.playStyle && { playStyle: q.playStyle }),
       ...(q.balance && { balance: q.balance }),
@@ -65,6 +69,26 @@ export class ProductsService {
       }),
     ]);
     return { items, total, page, limit };
+  }
+
+  /** ILIKE trên Postgres: không phân biệt hoa thường, tìm theo tên, slug, hãng, mã nội bộ. */
+  private async idsMatchingSearch(term: string): Promise<string[]> {
+    const safe = term.replace(/[%_]/g, '').trim();
+    if (!safe) return [];
+    const pattern = `%${safe}%`;
+    const slug = `%${slugify(safe)}%`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT DISTINCT p.id
+      FROM "Product" p
+      INNER JOIN "Brand" b ON b.id = p."brandId"
+      LEFT JOIN "ProductVariant" v ON v."productId" = p.id
+      WHERE p.name ILIKE ${pattern}
+         OR p.slug ILIKE ${pattern}
+         OR p.slug ILIKE ${slug}
+         OR b.name ILIKE ${pattern}
+         OR v."internalCode" ILIKE ${pattern}
+    `;
+    return rows.map((r) => r.id);
   }
 
   async bySlug(slug: string) {
