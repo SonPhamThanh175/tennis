@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Controller,
   Post,
@@ -9,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Request } from 'express';
@@ -31,6 +32,51 @@ function sniffExtension(b: Buffer): 'jpg' | 'png' | 'webp' | null {
   return null;
 }
 
+interface CloudinaryConfig {
+  cloudName: string;
+  apiKey: string;
+  apiSecret: string;
+}
+
+/** CLOUDINARY_URL có dạng cloudinary://<api_key>:<api_secret>@<cloud_name>. */
+function parseCloudinaryUrl(raw?: string): CloudinaryConfig | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== 'cloudinary:') return null;
+    return {
+      cloudName: u.hostname,
+      apiKey: decodeURIComponent(u.username),
+      apiSecret: decodeURIComponent(u.password),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function uploadToCloudinary(c: CloudinaryConfig, buffer: Buffer): Promise<string> {
+  const folder = 'tennis';
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = createHash('sha1')
+    .update(`folder=${folder}&timestamp=${timestamp}${c.apiSecret}`)
+    .digest('hex');
+
+  const body = new FormData();
+  body.set('file', new Blob([new Uint8Array(buffer)]));
+  body.set('api_key', c.apiKey);
+  body.set('timestamp', timestamp);
+  body.set('folder', folder);
+  body.set('signature', signature);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${c.cloudName}/image/upload`, {
+    method: 'POST',
+    body,
+  });
+  if (!res.ok) throw new BadGatewayException('Không thể tải ảnh lên kho lưu trữ');
+  const data = (await res.json()) as { secure_url: string };
+  return data.secure_url;
+}
+
 @ApiTags('Admin')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -45,6 +91,9 @@ export class UploadsController {
     if (!file) throw new BadRequestException('Thiếu file ảnh (field "file")');
     const ext = sniffExtension(file.buffer);
     if (!ext) throw new BadRequestException('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP');
+
+    const cloud = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
+    if (cloud) return { url: await uploadToCloudinary(cloud, file.buffer) };
 
     await mkdir(UPLOAD_DIR, { recursive: true });
     const name = `${randomUUID()}.${ext}`;
