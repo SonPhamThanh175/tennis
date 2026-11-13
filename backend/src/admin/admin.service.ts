@@ -164,6 +164,30 @@ export class AdminService {
     );
   }
 
+  /** Xóa cây vợt. Nếu đã nằm trong đơn thì không xóa được (giữ lịch sử). */
+  async deleteVariant(id: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { orderItems: true } },
+        product: { include: { _count: { select: { variants: true } } } },
+      },
+    });
+    if (!variant) throw new NotFoundException('Không tìm thấy cây vợt');
+    if (variant._count.orderItems > 0) {
+      throw new ConflictException(
+        'Cây vợt đã có trong đơn hàng nên không xóa được. Hãy ẩn khỏi cửa hàng.',
+      );
+    }
+    const productId = variant.productId;
+    const last = variant.product._count.variants <= 1;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.productVariant.delete({ where: { id } });
+      if (last) await tx.product.delete({ where: { id: productId } });
+    });
+    return { ok: true };
+  }
+
   // ---- Thương hiệu / danh mục ----
 
   listTaxonomy(kind: Taxonomy) {

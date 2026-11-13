@@ -82,6 +82,8 @@ export const adminApi = {
     request<Variant>(`/admin/products/${productId}/variants`, { method: 'POST', token, body }),
   updateVariant: (token: string, id: string, body: UpdateVariantInput) =>
     request<Variant>(`/admin/variants/${id}`, { method: 'PATCH', token, body }),
+  deleteVariant: (token: string, id: string) =>
+    request<{ ok: boolean }>(`/admin/variants/${id}`, { method: 'DELETE', token }),
 
   taxonomy: (token: string, kind: TaxonomyKind) =>
     request<TaxonomyItem[]>(`/admin/${kind}`, { token }),

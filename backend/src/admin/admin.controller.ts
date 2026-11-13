@@ -78,6 +78,11 @@ export class AdminController {
     return this.admin.updateVariant(id, dto);
   }
 
+  @Delete('variants/:id')
+  deleteVariant(@Param('id') id: string) {
+    return this.admin.deleteVariant(id);
+  }
+
   @Get('brands')
   listBrands() {
     return this.admin.listTaxonomy('brand');

@@ -120,9 +120,23 @@ export function InventoryTable() {
     {
       title: '',
       render: (_, r) => (
-        <Button size="small" onClick={() => setEditing(r)}>
-          Sửa
-        </Button>
+        <div className="flex gap-2">
+          <Button size="small" onClick={() => setEditing(r)}>
+            Sửa
+          </Button>
+          <Popconfirm
+            title="Xóa cây vợt này?"
+            description="Không hoàn tác được. Nếu đã có đơn hàng, hãy ẩn thay vì xóa."
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => run(() => adminApi.deleteVariant(token!, r.id), 'Đã xóa')}
+          >
+            <Button size="small" danger>
+              Xóa
+            </Button>
+          </Popconfirm>
+        </div>
       ),
     },
   ];
