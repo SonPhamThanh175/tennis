@@ -45,7 +45,7 @@ export class ListProductsQuery {
 }
 
 export class VariantDto {
-  @IsString() @IsNotEmpty() internalCode: string;
+  @IsOptional() @IsString() @IsNotEmpty() internalCode?: string;
   @IsEnum(GRIP_SIZES) gripSize: GripSize;
   @IsEnum(CONDITIONS) condition: Condition;
   /** Bắt buộc với mọi tình trạng trừ NEW. */
@@ -53,11 +53,11 @@ export class VariantDto {
   @IsString()
   @IsNotEmpty({ message: 'Hàng cũ phải có mô tả tình trạng' })
   conditionNote?: string;
-  @IsArray() @IsString({ each: true }) images: string[];
-  @IsInt() @Min(0) price: number;
-  @IsOptional() @IsInt() @Min(0) originalPrice?: number;
-  @IsOptional() @IsInt() @Min(0) costPrice?: number;
-  @IsInt() @Min(0) stock: number;
+  @IsArray() @IsString({ each: true }) images: string[] = [];
+  @Type(() => Number) @IsInt() @Min(0) price: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) originalPrice?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) costPrice?: number;
+  @Type(() => Number) @IsInt() @Min(0) stock: number;
 }
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

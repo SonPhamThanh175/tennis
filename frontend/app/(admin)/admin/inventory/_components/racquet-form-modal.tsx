@@ -41,7 +41,6 @@ interface FormValues {
   swingWeight?: number;
   beamWidthMm?: string;
   description: string;
-  internalCode: string;
   gripSize: GripSize;
   condition: Condition;
   conditionNote?: string;
@@ -114,7 +113,6 @@ function RacquetForm({
   async function submit() {
     const v = await form.validateFields();
     const variant = {
-      internalCode: v.internalCode.trim(),
       gripSize: v.gripSize,
       condition: v.condition,
       conditionNote: v.conditionNote?.trim() || undefined,
@@ -147,8 +145,8 @@ function RacquetForm({
       } else {
         await adminApi.createProduct(token!, {
           ...spec,
-          slug: slugify(`${v.name} ${variant.internalCode}`),
-          images: [],
+          slug: slugify(v.name) || 'vot',
+          images: variant.images,
           variants: [{ ...variant, stock: 1 }],
         });
       }
@@ -166,7 +164,6 @@ function RacquetForm({
         ...racquet.product,
         brandId: racquet.product.brandId,
         categoryId: racquet.product.categoryId,
-        internalCode: racquet.internalCode,
         gripSize: racquet.gripSize,
         condition: racquet.condition,
         conditionNote: racquet.conditionNote ?? undefined,
@@ -197,8 +194,12 @@ function RacquetForm({
 
         <Divider titlePlacement="start">Cây vợt</Divider>
         <div className="grid gap-x-4 sm:grid-cols-3">
-          <Form.Item name="internalCode" label="Mã nội bộ" rules={req}>
-            <Input placeholder="VC-0001" />
+          <Form.Item label="Mã nội bộ">
+            <Input
+              disabled
+              value={racquet?.internalCode ?? ''}
+              placeholder="Tự sinh khi lưu"
+            />
           </Form.Item>
           <Form.Item name="gripSize" label="Grip" rules={req}>
             <Select options={GRIPS.map((g) => ({ value: g, label: GRIP_LABEL(g) }))} />
@@ -254,7 +255,7 @@ function RacquetForm({
           <Form.Item name="headSizeSqIn" label="Mặt vợt (in²)" rules={req}>
             <InputNumber min={80} max={120} className="!w-full" />
           </Form.Item>
-          <Form.Item name="stringPattern" label="Mắt cước" rules={req}>
+          <Form.Item name="stringPattern" label="Mật độ dây" rules={req}>
             <Select options={toOptions(STRING_PATTERN_LABEL)} />
           </Form.Item>
           <Form.Item name="stiffnessRA" label="Độ cứng RA">

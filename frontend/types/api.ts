@@ -88,7 +88,7 @@ export interface Product {
 }
 
 export interface VariantInput {
-  internalCode: string;
+  internalCode?: string;
   gripSize: GripSize;
   condition: Condition;
   conditionNote?: string;

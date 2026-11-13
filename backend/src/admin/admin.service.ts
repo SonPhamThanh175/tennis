@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { OrdersService } from '../orders/orders.service.js';
@@ -74,12 +75,22 @@ export class AdminService {
   }
 
   async createProduct(dto: CreateProductDto) {
-    const { variants, ...rest } = dto;
+    const { variants: rawVariants, ...rest } = dto;
     await this.ensureTaxonomyIds(dto.categoryId, dto.brandId);
+    const variants = await Promise.all(
+      rawVariants.map(async (v) => {
+        const { internalCode: _ignored, ...fields } = v;
+        return { ...fields, internalCode: await this.nextInternalCode() };
+      }),
+    );
+    const slug = await this.uniqueSlug(dto.slug, variants[0]?.internalCode);
+    const images = rest.images?.length ? rest.images : (variants[0]?.images ?? []);
     return this.guardUnique(() =>
       this.prisma.product.create({
         data: {
           ...rest,
+          slug,
+          images,
           weightClass: weightClassOf(dto.weightGrams),
           headSizeClass: headSizeClassOf(dto.headSizeSqIn),
           variants: { create: variants },
@@ -145,8 +156,10 @@ export class AdminService {
 
   async createVariant(productId: string, dto: CreateVariantDto) {
     await this.ensureProduct(productId);
+    const { internalCode: _ignored, ...fields } = dto;
+    const internalCode = await this.nextInternalCode();
     return this.guardUnique(() =>
-      this.prisma.productVariant.create({ data: { ...dto, productId } }),
+      this.prisma.productVariant.create({ data: { ...fields, internalCode, productId } }),
     );
   }
 
@@ -262,6 +275,31 @@ export class AdminService {
 
   // ---- helper ----
 
+  /** VC- + 6 ký tự, tránh 0/O/1/I cho dễ đọc trên kệ. */
+  private async nextInternalCode(): Promise<string> {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    for (let i = 0; i < 16; i++) {
+      const bytes = randomBytes(6);
+      let code = 'VC-';
+      for (const b of bytes) code += alphabet[b % alphabet.length];
+      const exists = await this.prisma.productVariant.findUnique({
+        where: { internalCode: code },
+      });
+      if (!exists) return code;
+    }
+    throw new ConflictException('Không sinh được mã nội bộ, hãy thử lại');
+  }
+
+  private async uniqueSlug(base: string, suffix?: string) {
+    const root = base.replace(/^-+|-+$/g, '') || 'vot';
+    const candidates = suffix ? [root, `${root}-${suffix.toLowerCase()}`] : [root];
+    for (const slug of candidates) {
+      const taken = await this.prisma.product.findUnique({ where: { slug } });
+      if (!taken) return slug;
+    }
+    return `${root}-${Date.now().toString(36)}`;
+  }
+
   private async ensureProduct(id: string) {
     const p = await this.prisma.product.findUnique({ where: { id } });
     if (!p) throw new NotFoundException('Không tìm thấy sản phẩm');
@@ -293,7 +331,11 @@ export class AdminService {
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         const target = (e.meta?.target as string[] | string | undefined) ?? '';
-        throw new ConflictException(`Giá trị đã tồn tại (${String(target)})`);
+        const field = String(target);
+        if (field.includes('internalCode')) {
+          throw new ConflictException('Mã nội bộ đã tồn tại, hãy thử lưu lại.');
+        }
+        throw new ConflictException(`Giá trị đã tồn tại (${field})`);
       }
       throw e;
     }
