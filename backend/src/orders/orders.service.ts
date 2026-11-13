@@ -110,6 +110,7 @@ export class OrdersService {
       if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
       if (order.status === 'CANCELLED') return order;
       for (const item of order.items) {
+        if (!item.variantId) continue;
         await tx.productVariant.update({
           where: { id: item.variantId },
           data: { stock: { increment: item.quantity } },

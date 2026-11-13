@@ -47,7 +47,7 @@ export function InventoryTable() {
       const r = await adminApi.bulkDeleteVariants(token!, selected);
       const parts = [
         r.deleted ? `đã xóa ${r.deleted}` : '',
-        r.hidden ? `đã ẩn ${r.hidden} (đã có đơn)` : '',
+        r.hidden ? `đã ẩn ${r.hidden} (đơn đang xử lý)` : '',
       ].filter(Boolean);
       message.success(parts.join(', ') || 'Xong');
       setSelected([]);
@@ -142,7 +142,7 @@ export function InventoryTable() {
           </Button>
           <Popconfirm
             title="Xóa cây vợt này?"
-            description="Không hoàn tác được. Nếu đã có đơn hàng, hãy ẩn thay vì xóa."
+            description="Không hoàn tác được. Đơn đang xử lý sẽ chặn xóa; đơn hoàn thành hoặc đã hủy thì xóa được."
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -165,7 +165,7 @@ export function InventoryTable() {
           {selected.length > 0 && (
             <Popconfirm
               title={`Xóa ${selected.length} cây đã chọn?`}
-              description="Cây đã có đơn sẽ được ẩn khỏi cửa hàng, không xóa lịch sử."
+              description="Cây còn đơn đang xử lý sẽ được ẩn. Đơn hoàn thành hoặc đã hủy thì xóa được, lịch sử đơn vẫn giữ tên và giá."
               okText="Xóa / ẩn"
               cancelText="Hủy"
               okButtonProps={{ danger: true }}

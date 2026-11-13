@@ -21,6 +21,7 @@ import {
 
 type Status = 'PENDING' | 'PAID' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
 type Taxonomy = 'brand' | 'category';
+const OPEN_ORDER: Status[] = ['PENDING', 'PAID', 'SHIPPING'];
 
 @Injectable()
 export class AdminService {
@@ -177,19 +178,16 @@ export class AdminService {
     );
   }
 
-  /** Xóa cây vợt. Nếu đã nằm trong đơn thì không xóa được (giữ lịch sử). */
+  /** Xóa cây vợt. Chỉ chặn khi còn đơn đang xử lý (chưa hoàn thành / chưa hủy). */
   async deleteVariant(id: string) {
     const variant = await this.prisma.productVariant.findUnique({
       where: { id },
-      include: {
-        _count: { select: { orderItems: true } },
-        product: { include: { _count: { select: { variants: true } } } },
-      },
+      include: { product: { include: { _count: { select: { variants: true } } } } },
     });
     if (!variant) throw new NotFoundException('Không tìm thấy cây vợt');
-    if (variant._count.orderItems > 0) {
+    if (await this.hasOpenOrders(id)) {
       throw new ConflictException(
-        'Cây vợt đã có trong đơn hàng nên không xóa được. Hãy ẩn khỏi cửa hàng.',
+        'Cây vợt còn trong đơn đang xử lý nên không xóa được. Hãy ẩn khỏi cửa hàng, hoặc đợi đơn hoàn thành/hủy.',
       );
     }
     const productId = variant.productId;
@@ -201,21 +199,18 @@ export class AdminService {
     return { ok: true };
   }
 
-  /** Xóa nhiều cây. Cây đã có đơn thì ẩn sản phẩm, không xóa lịch sử. */
+  /** Xóa nhiều cây. Đơn đang xử lý thì ẩn; đơn hoàn thành/hủy thì xóa được (dòng đơn giữ tên và giá). */
   async bulkDeleteVariants(ids: string[]) {
     let deleted = 0;
     let hidden = 0;
     let missing = 0;
     for (const id of [...new Set(ids)]) {
-      const variant = await this.prisma.productVariant.findUnique({
-        where: { id },
-        include: { _count: { select: { orderItems: true } } },
-      });
+      const variant = await this.prisma.productVariant.findUnique({ where: { id } });
       if (!variant) {
         missing += 1;
         continue;
       }
-      if (variant._count.orderItems > 0) {
+      if (await this.hasOpenOrders(id)) {
         await this.prisma.product.update({
           where: { id: variant.productId },
           data: { isActive: false },
@@ -233,6 +228,12 @@ export class AdminService {
       deleted += 1;
     }
     return { deleted, hidden, missing };
+  }
+
+  private hasOpenOrders(variantId: string) {
+    return this.prisma.orderItem.count({
+      where: { variantId, order: { status: { in: OPEN_ORDER } } },
+    }).then((n) => n > 0);
   }
 
   // ---- Thương hiệu / danh mục ----
