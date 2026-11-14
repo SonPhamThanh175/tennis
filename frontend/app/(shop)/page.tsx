@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { ErrorBox, Spinner } from '@/components/ui/states';
+import { ErrorBox } from '@/components/ui/states';
 import { productsApi } from '@/lib/api';
 import { RacquetCard } from './_components/racquet-card';
+import { RacquetCardSkeletonGrid } from './_components/racquet-card-skeleton';
 
 async function Featured() {
   let items;
@@ -88,7 +89,14 @@ export default function Home() {
 
       <section className="mx-auto max-w-7xl px-4 pt-14">
         <h2 className="display mb-8 text-5xl">Mới lên kệ</h2>
-        <Suspense fallback={<Spinner />}>
+        <Suspense
+          fallback={
+            <RacquetCardSkeletonGrid
+              count={8}
+              className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-4"
+            />
+          }
+        >
           <Featured />
         </Suspense>
       </section>

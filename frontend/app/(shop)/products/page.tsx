@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { EmptyState, ErrorBox, Spinner } from '@/components/ui/states';
+import { EmptyState, ErrorBox } from '@/components/ui/states';
 import { productsApi } from '@/lib/api';
 import type { Condition, PlayStyle, SkillLevel } from '@/types/api';
 import { RacquetCard } from '../_components/racquet-card';
+import { RacquetCardSkeletonGrid } from '../_components/racquet-card-skeleton';
 import { FilterDrawer } from './_components/filter-drawer';
 import { Filters, type ProductParams } from './_components/filters';
 import { PageLinks } from './_components/page-links';
@@ -68,11 +69,27 @@ async function Listing({ searchParams }: { searchParams: Promise<ProductParams> 
   );
 }
 
+function ProductsListingSkeleton() {
+  return (
+    <div className="grid gap-10 md:grid-cols-[220px_1fr]">
+      <div className="hidden space-y-4 md:block" aria-hidden>
+        <div className="h-8 w-32 animate-pulse bg-neutral-200" />
+        <div className="h-36 animate-pulse bg-neutral-100" />
+        <div className="h-36 animate-pulse bg-neutral-100" />
+      </div>
+      <RacquetCardSkeletonGrid
+        count={12}
+        className="grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-3"
+      />
+    </div>
+  );
+}
+
 export default function ProductsPage({ searchParams }: PageProps<'/products'>) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="display mb-6 text-4xl md:mb-8 md:text-6xl">Vợt tennis</h1>
-      <Suspense fallback={<Spinner />}>
+      <Suspense fallback={<ProductsListingSkeleton />}>
         <Listing searchParams={searchParams as Promise<ProductParams>} />
       </Suspense>
     </div>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Drawer } from '@/components/ui/drawer';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { RacquetMark } from '@/components/ui/racquet-mark';
 import { useAuth } from '@/providers/auth-provider';
 import { useCart } from '@/providers/cart-provider';
 
@@ -46,7 +47,8 @@ export function ShopHeader() {
         VỢT CŨ ĐÃ KIỂM ĐỊNH · ĐỔI TRẢ TRONG 7 NGÀY
       </div>
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 md:h-16 md:gap-8">
-        <Link href="/" className="display shrink-0 text-2xl tracking-wider md:text-3xl">
+        <Link href="/" className="display flex shrink-0 items-center gap-2 text-2xl tracking-wider md:text-3xl">
+          <RacquetMark className="h-8 w-6 md:h-9 md:w-7" />
           Tennis<span className="text-brand">Shop</span>
         </Link>
         <nav className="hidden flex-1 gap-6 md:flex justify-center">

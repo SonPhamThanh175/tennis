@@ -1,5 +1,6 @@
 import { Tag } from 'antd';
 import Link from 'next/link';
+import { RacquetMark } from '@/components/ui/racquet-mark';
 import { CONDITION_LABEL, CONDITION_TAG_COLOR, formatVnd, WEIGHT_CLASS_LABEL } from '@/lib/format';
 import type { Product } from '@/types/api';
 
@@ -16,7 +17,9 @@ export function RacquetCard({ product }: { product: Product }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" />
         ) : (
-          <div className="flex h-full items-center justify-center text-6xl text-neutral-300">🎾</div>
+          <div className="flex h-full items-center justify-center bg-paper text-neutral-300">
+            <RacquetMark className="h-24 w-20" muted />
+          </div>
         )}
         {first && (
           <Tag color={CONDITION_TAG_COLOR[first.condition]} className="!absolute left-3 top-3 !m-0 font-semibold">

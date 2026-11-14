@@ -1,11 +1,13 @@
 import Link from 'next/link';
+import { RacquetMark } from '@/components/ui/racquet-mark';
 
 export function ShopFooter() {
   return (
     <footer className="mt-16 bg-ink text-neutral-300">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
-          <p className="display text-3xl text-white">
+          <p className="display flex items-center gap-2 text-3xl text-white">
+            <RacquetMark className="h-9 w-7" />
             Tennis<span className="text-brand">Shop</span>
           </p>
           <p className="mt-3 text-sm">Chuyên vợt tennis cũ tuyển chọn, kiểm định từng cây.</p>

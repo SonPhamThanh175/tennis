@@ -1,5 +1,7 @@
 'use client';
 
+import { RacquetMark } from '@/components/ui/racquet-mark';
+
 export function Spinner({ label = 'Đang tải...' }: { label?: string }) {
   return (
     <div className="flex flex-col items-center gap-4 py-20 text-neutral-500">
@@ -23,7 +25,7 @@ export function ErrorBox({ message }: { message: string }) {
 export function EmptyState({ message, action }: { message: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center py-16 text-center">
-      <span className="display text-6xl text-neutral-200">🎾</span>
+      <RacquetMark className="h-16 w-12" muted />
       <p className="mt-4 text-neutral-600">{message}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>

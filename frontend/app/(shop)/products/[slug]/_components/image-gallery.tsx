@@ -2,6 +2,7 @@
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState } from 'react';
+import { RacquetMark } from '@/components/ui/racquet-mark';
 
 export function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
   const [active, setActive] = useState(0);
@@ -34,7 +35,9 @@ export function ImageGallery({ images, alt }: { images: string[]; alt: string })
           // eslint-disable-next-line @next/next/no-img-element
           <img src={current} alt={alt} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-8xl text-neutral-300">🎾</div>
+          <div className="flex h-full items-center justify-center bg-paper text-neutral-300">
+            <RacquetMark className="h-36 w-28" muted />
+          </div>
         )}
         {images.length > 1 && (
           <>
